@@ -119,4 +119,4 @@ Data <- left_join(Data, natgasprice, by = c("Date"="Date"))
 library(zoo)
 as.Date(192608,origin = "1970-01-01")
 
-
+#hello honey 
