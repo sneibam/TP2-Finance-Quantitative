@@ -95,7 +95,7 @@ data_euro_dollar$Date <- substr(data_euro_dollar$Date, 1,7)
 
 Data <- left_join(Data, data_euro_dollar, by = c("Date"="Date"))
 
-### MCOIL eu
+### MCOIL eu .  prix du petrol sur le marché Europeen 
 
 mcoilbrenteu <- read.csv("MCOILBRENTEU.csv")
 mcoilbrenteu$Date <- as.Date(mcoilbrenteu$DATE, format = "%Y-%m-%d")
@@ -105,11 +105,38 @@ mcoilbrenteu$Date <- substr(mcoilbrenteu$Date, 1,7)
 Data <- left_join(Data, mcoilbrenteu[-c(1)], by = c("Date"="Date"))
 
 
-### Natural gas price
+### Prix du gaz naturel sur le marché Europeen
 
 natgasprice <- read.csv("natural_gas_prices.csv")
 colnames(natgasprice) <- c("Date", "Natural gas price")
 Data <- left_join(Data, natgasprice, by = c("Date"="Date"))
+
+
+######   Loans for consumption excluding revolving loans and overdrafts, Over 1 and up to 5 years
+
+data_credit <- read.csv("data_credit.csv", header = F, sep = ",")
+colnames(data_credit) <- c("Date", "Credit Rates in %")
+
+
+
+data_credit$Date <- paste(data_credit$Date, "01")
+data_credit$Date <- as.Date(data_credit$Date, format = "%Y%b%d")
+data_credit$Date <- substr(data_credit$Date, 1,7)
+
+
+
+##################  Debt Securities other than shares, excluding financial derivatives, Euro, [Millions of Euro]
+######  
+
+debt_securities <- read.csv("debt_securities.csv", header = F, sep = ",")
+debt_securities <- debt_securities[-c(1:5),c(1,4)]
+colnames(debt_securities) <- c("Date", "Debt Securities")
+
+debt_securities$Date <- paste(debt_securities$Date, "01")
+debt_securities$Date <- as.Date(debt_securities$Date, format = "%Y%b%d")
+debt_securities$Date <- substr(debt_securities$Date, 1,7)
+
+
 
 
 ########    n'executes  pas
