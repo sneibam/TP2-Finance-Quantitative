@@ -1,16 +1,17 @@
 getwd()
-table1 <- read.csv("Europe_3_Factors.csv", header = F)
-table1 <- table1[4:354,]
+table1 <- read.csv("Europe_5_Factors.csv", header = F)
+#table1 <- table1[4:354,]
 library(readxl)
 library(dplyr)
 library(lubridate)
 library(tidyverse)
+library(hablar)
 #install.packages("xts")
 library(xts)
 
 FF3 <- read.csv("dataFF3.csv", header = FALSE)
 colnames(FF3) <- c("Date", "Rates")
-colnames(table1) <- c("Date", "Mkt-RF", "SMB", "HML", "RF")
+colnames(table1) <- c("Date", "Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF" )
 
 ## importer les donnés de taux d'interêts de la Banque Centrale Europeen 
 data1 <- read.csv("data_rates.csv", header = FALSE)
@@ -35,12 +36,12 @@ table1$year <-NULL
 table1$month <- NULL
 
 ## on renome la dernière colone de table1 pour avoir le méme nom avec le df FF3
-colnames(table1) <- c("Mkt-RF", "SMB", "HML", "RF", "Date")
+colnames(table1) <- c("Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF","Date")
 
 ### on fait un leftjoin des dfs FF3 et table1 en gardent touts les observations dans le tableau FF3
 #Data=merge(x = FF3, y = table1, by = "Date", all.x = TRUE)
 
-FF3 <- get(load("~/Downloads/FF3.rdata"))
+FF3 <- get(load("FF3.rdata"))
 head(FF3)
 Data <- left_join(FF3, table1, by = c("Date"="Date"))
 
@@ -95,7 +96,7 @@ data_euro_dollar$Date <- substr(data_euro_dollar$Date, 1,7)
 
 Data <- left_join(Data, data_euro_dollar, by = c("Date"="Date"))
 
-### MCOIL eu .  prix du petrol sur le marché Europeen 
+### MCOIL eu
 
 mcoilbrenteu <- read.csv("MCOILBRENTEU.csv")
 mcoilbrenteu$Date <- as.Date(mcoilbrenteu$DATE, format = "%Y-%m-%d")
@@ -105,45 +106,161 @@ mcoilbrenteu$Date <- substr(mcoilbrenteu$Date, 1,7)
 Data <- left_join(Data, mcoilbrenteu[-c(1)], by = c("Date"="Date"))
 
 
-### Prix du gaz naturel sur le marché Europeen
+### Natural gas price
 
 natgasprice <- read.csv("natural_gas_prices.csv")
 colnames(natgasprice) <- c("Date", "Natural gas price")
 Data <- left_join(Data, natgasprice, by = c("Date"="Date"))
 
+### Taux d'interet credit
 
-######   Loans for consumption excluding revolving loans and overdrafts, Over 1 and up to 5 years
-
-data_credit <- read.csv("data_credit.csv", header = F, sep = ",")
-colnames(data_credit) <- c("Date", "Credit Rates in %")
-
-
-
-data_credit$Date <- paste(data_credit$Date, "01")
-data_credit$Date <- as.Date(data_credit$Date, format = "%Y%b%d")
-data_credit$Date <- substr(data_credit$Date, 1,7)
+data3 <- read.csv("data_credit.csv")
+data3$Date <- paste(data3$Date, "01")
+data3$Date <- as.Date(data3$Date, format = "%Y%b%d")
+data3$Date <- substr(data3$Date, 1,7)
+colnames(data3) <- c("Date", "Credit_rates")
+Data <- left_join(Data, data3, by = c("Date"="Date"))
 
 
+### Debt securities
 
-##################  Debt Securities other than shares, excluding financial derivatives, Euro, [Millions of Euro]
-######  
-
-debt_securities <- read.csv("debt_securities.csv", header = F, sep = ",")
-debt_securities <- debt_securities[-c(1:5),c(1,4)]
-colnames(debt_securities) <- c("Date", "Debt Securities")
+debt_securities <- read.csv("debt_securities.csv", header = FALSE)
+debt_securities <- debt_securities[-c(1:5), c(1,4)]
+colnames(debt_securities) <- c("Date", "Debt_securities")
 
 debt_securities$Date <- paste(debt_securities$Date, "01")
 debt_securities$Date <- as.Date(debt_securities$Date, format = "%Y%b%d")
 debt_securities$Date <- substr(debt_securities$Date, 1,7)
 
+Data <- left_join(Data, debt_securities, by = c("Date"="Date"))
+
+
+Data$Debt_securities=as.numeric(as.character(Data$Debt_securities))
+
+
+# Cafe
+
+coffee_prices <- read.csv("coffee-prices-historical-chart-data.csv", header = F, sep=",")
+colnames(coffee_prices) <- c("Date", "Coffee_price")
+coffee_prices <- coffee_prices[-1,]
+
+coffee_prices$Date <- as.Date(coffee_prices$Date, format="%Y-%m-%d")
+
+coffee_prices$Coffee_price <- as.numeric(as.character(coffee_prices$Coffee_price))
+
+coffee_prices <- coffee_prices %>% group_by(Date=floor_date(Date, "month")) %>%
+  summarize(Coffee_price=mean(Coffee_price))
+
+
+coffee_prices <- coffee_prices %>% drop_na(Coffee_price)
+coffee_prices$Date <- substr(coffee_prices$Date, 1,7)
+
+Data <- left_join(Data, coffee_prices, by = c("Date"="Date"))
+
+## Sugar Price
+sugar_prices <- read.csv("sugar-240.csv", header = F, sep=";")
+sugar_prices <- sugar_prices[4:242,1:2]
+colnames(sugar_prices) <- c("Date", "Sugar_price")
+sugar_prices$Sugar_price <- as.numeric(as.character(sugar_prices$Sugar_price))
+sugar_prices$Date <- paste(sugar_prices$Date, "-01", sep="")
+sugar_prices$Date <- as.Date(sugar_prices$Date, format="%b-%y-%d")
+sugar_prices$Date <- substr(sugar_prices$Date, 1,7)
+Data <- left_join(Data, sugar_prices, by = c("Date"="Date"))
+
+
+## MSCI Europe
+
+msci_europe <- read.csv("MSCI Europe.csv", header = F, sep = ",")
+msci_europe <- msci_europe[-1, c(1, 7)]
+colnames(msci_europe) <- c("Date", "MSCI_Variation")
+msci_europe$MSCI_Variation <- as.character(msci_europe$MSCI_Variation)
+msci_europe$MSCI_Variation <- substr(msci_europe$MSCI_Variation, 1, nchar(msci_europe$MSCI_Variation)-1)
+msci_europe$MSCI_Variation <- gsub(",", ".", msci_europe$MSCI_Variation)
+msci_europe$MSCI_Variation <- as.numeric(msci_europe$MSCI_Variation)
+
+msci_europe$Date <- as.Date(msci_europe$Date, format = "%d/%m/%Y")
+msci_europe <- msci_europe %>% group_by(Date=floor_date(Date, "month")) %>%
+  summarize(MSCI_Variation=mean(MSCI_Variation))
+
+
+msci_europe$Date <- substr(msci_europe$Date, 1,7)
+
+Data <- left_join(Data, msci_europe, by = c("Date"="Date"))
+Data <- Data %>% drop_na(MSCI_Variation)
+
+pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA", "Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation")], center=TRUE, scale. = TRUE)
+summary(pca)
+
+library("FactoMineR")
+res.pca <- PCA(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA","Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation")], graph = TRUE)
+print(res.pca)
+
+## Eigen values
+library("factoextra")
+library(ggplot2)
+library("corrplot")
+eig.val <- get_eigenvalue(res.pca)
+eig.val
+# Interpretation: Le critère de Kaiser (1961) nous indique que si la valeur propre est supérieure à 1, la composante principale concernée représente plus de variance par rapport à une seule variable d’origine. On remarque que les valeurs absolues qui expliques les trois prmeieres dimensions sont representées par supérieures à 1. 
+## Eigen values plot
+eig.viz<-fviz_eig(res.pca, addlabels = TRUE, ylim = c(0, 50))
+eig.viz
+## Variables extraction from PCA
+var <- get_pca_var(res.pca)
+var
+# Coordonnées
+head(var$coord)
+# Cos2: qualité de répresentation
+head(var$cos2)
+# Contributions aux composantes principales
+head(var$contrib)
+
+## Cercle de corrélation
+# Coordonnées des variables
+head(var$coord, 10)
+fviz_pca_var(res.pca, col.var = "black")
+# Cos2 total des variables sur Dim.1 et Dim.2
+fviz_cos2(res.pca, choice = "var", axes = 1:3)
+# Contributions des variables à PC1
+fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
+# Contributions des variables à PC2
+fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
+fviz_contrib(res.pca, choice = "var", axes = 1:2, top = 10)
+# Les varaibles USD, MCOILBRENTEU, Coffee_price, Mkt-RF, RMW, USD,  sont celles qui contribuent le plus a la variance expliquee des 2 premiers axes.
+# Nous allons donc garder uniquement ces 4 variables pour la modelisation
+fviz_pca_var(res.pca, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")
+)
+res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
+# Description de la dimension 1
+res.desc$Dim.1
+# Description de la dimension 2
+res.desc$Dim.2
+# 
+
+# Modelisation
+
+linear_model_3factors <- lm(formula = target ~ `Mkt-RF`+SMB+HML,data = Data)
+summary(linear_model_3factors)
+
+linear_model_5factors <- lm(formula = target ~ `Mkt-RF`+SMB+HML+RMW+CMA,data = Data)
+summary(linear_model_5factors)
+
+# Modele lineaire avec toutes nos variables
+linear_model_all <- lm(formula = target ~ `Mkt-RF`+SMB+HML+RMW+CMA+Rates_Deposit_Facility_BCE+USD+MCOILBRENTEU+`Natural gas price`+Credit_rates+Debt_securities+Coffee_price+Sugar_price+MSCI_Variation,data = Data)
+summary(linear_model_all)
+
+# Modele lineaire avec uniquement les variables significatives dans nos 2 axes
+linear_model <- lm(formula = target~Coffee_price+MCOILBRENTEU+`Mkt-RF`+Sugar_price+RMW+USD, data = Data)
+summary(linear_model)
+
+
+linear_model <- lm(formula = target~`Mkt-RF`+MSCI_Variation+USD+MCOILBRENTEU, data = Data)
+summary(linear_model)
 
 
 
-########    n'executes  pas
-#table1[,1] 
 
-#format(as.Date("192607", "%Y%m"),format = "%Y-%m-%d")
-library(zoo)
-as.Date(192608,origin = "1970-01-01")
+linear_model <- lm(formula = target ~ `Mkt-RF`+SMB+HML+RMW+MCOILBRENTEU+Credit_rates,data = Data)
+summary(linear_model)
 
-#hello honey 
