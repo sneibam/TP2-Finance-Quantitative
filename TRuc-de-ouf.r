@@ -170,7 +170,7 @@ Data <- left_join(Data, sugar_prices, by = c("Date"="Date"))
 
 ## MSCI Europe
 
-msci_europe <- read.csv("MSCI Europe.csv", header = F, sep = ",")
+msci_europe <- read.csv("MSCI.csv", header = F, sep = ",")
 msci_europe <- msci_europe[-1, c(1, 7)]
 colnames(msci_europe) <- c("Date", "MSCI_Variation")
 msci_europe$MSCI_Variation <- as.character(msci_europe$MSCI_Variation)
@@ -178,21 +178,38 @@ msci_europe$MSCI_Variation <- substr(msci_europe$MSCI_Variation, 1, nchar(msci_e
 msci_europe$MSCI_Variation <- gsub(",", ".", msci_europe$MSCI_Variation)
 msci_europe$MSCI_Variation <- as.numeric(msci_europe$MSCI_Variation)
 
-msci_europe$Date <- as.Date(msci_europe$Date, format = "%d/%m/%Y")
-msci_europe <- msci_europe %>% group_by(Date=floor_date(Date, "month")) %>%
-  summarize(MSCI_Variation=mean(MSCI_Variation))
-
-
+msci_europe$Date <- paste(msci_europe$Date, "01")
+msci_europe$Date <- as.Date(msci_europe$Date, format="%b %y %d")
 msci_europe$Date <- substr(msci_europe$Date, 1,7)
 
 Data <- left_join(Data, msci_europe, by = c("Date"="Date"))
-Data <- Data %>% drop_na(MSCI_Variation)
 
-pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA", "Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation")], center=TRUE, scale. = TRUE)
+## Euro Stoxx 50
+
+euro_stoxx50 <- read.csv("Euro Stoxx 50.csv", header = F, sep = ",")
+euro_stoxx50 <- euro_stoxx50[-1, c(1, 7)]
+colnames(euro_stoxx50) <- c("Date", "EuroStoxx_Variation")
+euro_stoxx50$EuroStoxx_Variation <- as.character(euro_stoxx50$EuroStoxx_Variation)
+euro_stoxx50$EuroStoxx_Variation <- substr(euro_stoxx50$EuroStoxx_Variation, 1, nchar(euro_stoxx50$EuroStoxx_Variation)-1)
+euro_stoxx50$EuroStoxx_Variation <- gsub(",", ".", euro_stoxx50$EuroStoxx_Variation)
+euro_stoxx50$EuroStoxx_Variation <- as.numeric(euro_stoxx50$EuroStoxx_Variation)
+
+euro_stoxx50$Date <- paste(euro_stoxx50$Date, "01")
+euro_stoxx50$Date <- as.Date(euro_stoxx50$Date, format="%b %y %d")
+euro_stoxx50$Date <- substr(euro_stoxx50$Date, 1,7)
+
+Data <- left_join(Data, euro_stoxx50, by = c("Date"="Date"))
+
+#Data <- Data %>% drop_na(MSCI_Variation)
+Data <- Data %>% drop_na(EuroStoxx_Variation)
+
+# ACP
+
+pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA", "Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation", "EuroStoxx_Variation")], center=TRUE, scale. = TRUE)
 summary(pca)
 
 library("FactoMineR")
-res.pca <- PCA(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA","Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation")], graph = TRUE)
+res.pca <- PCA(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA","Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation", "EuroStoxx_Variation")], graph = TRUE)
 print(res.pca)
 
 ## Eigen values
@@ -255,9 +272,8 @@ linear_model <- lm(formula = target~Coffee_price+MCOILBRENTEU+`Mkt-RF`+Sugar_pri
 summary(linear_model)
 
 
-linear_model <- lm(formula = target~`Mkt-RF`+MSCI_Variation+USD+MCOILBRENTEU, data = Data)
+linear_model <- lm(formula = target~`Mkt-RF`+EuroStoxx_Variation+Credit_rates, `Natural gas price`, USD, data = Data)
 summary(linear_model)
-
 
 
 

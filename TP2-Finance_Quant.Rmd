@@ -1,0 +1,168 @@
+---
+title: "TP2 Finance Quantitative - Modèles Multifactoriels"
+date: "12/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+install.packages("readxl", repos = "http://cran.us.r-project.org")
+install.packages("dplyr", repos = "http://cran.us.r-project.org")
+install.packages("lubridate", repos = "http://cran.us.r-project.org")
+install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+install.packages("hablar", repos = "http://cran.us.r-project.org")
+install.packages("xts", repos = "http://cran.us.r-project.org")
+```
+
+## Chargement de l'ensemble des packages R
+
+```{r, error=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(readxl)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(hablar)
+library(xts)
+```
+
+## Chargement de l'ensemble des datasets
+
+```{r}
+table1 <- read.csv("Europe_5_Factors.csv", header = F) # Recuperation des 5 facteurs du Fama/French (Mkt-Rf, SMB, HML, RMW, CMA)
+FF3 <- get(load("FF3.rdata")) # Récupération des rendements de notre fonds "JPM INV-JPM EUROPE SEL EQ-A"
+data1 <- read.csv("data_rates.csv", header = FALSE) # Récupération des taux d'interet de la BCE
+data_euro_dollar <- read.csv("eurofxref-hist.csv")
+mcoilbrenteu <- read.csv("MCOILBRENTEU.csv")
+natgasprice <- read.csv("natural_gas_prices.csv")
+data3 <- read.csv("data_credit.csv")
+debt_securities <- read.csv("debt_securities.csv", header = FALSE)
+coffee_prices <- read.csv("coffee-prices-historical-chart-data.csv", header = F, sep=",")
+sugar_prices <- read.csv("sugar-240.csv", header = F, sep=";")
+msci_europe <- read.csv("MSCI Europe.csv", header = F, sep = ",")
+
+```
+
+```{r, include=FALSE}
+data1 <- data1[-c(1:5), c(1, 9)]
+colnames(data1) <- c("Date","Rates_Deposit_Facility_BCE")
+colnames(table1) <- c("Date", "Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF")
+year <- substr(table1$Date, 1, 4)
+month <- substr(table1$Date, 5,6)
+table1$year <- year
+table1$month <- month
+table1$date_nouveau<- paste(table1$year,table1$month,sep = "-")
+table1$Date<- NULL
+table1$year <-NULL
+table1$month <- NULL
+
+colnames(table1) <- c("Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF","Date")
+```
+
+```{r, include=FALSE}
+data1$Date <- as.Date(data1$Date, format = "%Y-%m-%d")
+data1$Rates_Deposit_Facility_BCE <- as.numeric(as.character(data1$Rates_Deposit_Facility_BCE))
+
+data1 <- data1 %>% group_by(Date=floor_date(Date, "month")) %>%
+  summarize(Rates_Deposit_Facility_BCE=mean(Rates_Deposit_Facility_BCE))
+
+data1 <- data1 %>% drop_na(Rates_Deposit_Facility_BCE)
+data1$Date <- substr(data1$Date, 1,7)
+
+data_euro_dollar <- data_euro_dollar[,1:2]
+
+data_euro_dollar$Date <- as.Date(data_euro_dollar$Date, format = "%Y-%m-%d")
+data_euro_dollar <- data_euro_dollar %>% group_by(Date=floor_date(Date, "month")) %>%
+  summarize(USD=mean(USD))
+
+
+data_euro_dollar <- data_euro_dollar %>% drop_na(USD)
+data_euro_dollar$Date <- substr(data_euro_dollar$Date, 1,7)
+
+mcoilbrenteu$Date <- as.Date(mcoilbrenteu$DATE, format = "%Y-%m-%d")
+
+mcoilbrenteu$Date <- substr(mcoilbrenteu$Date, 1,7)
+
+colnames(natgasprice) <- c("Date", "Natural gas price")
+
+data3$Date <- paste(data3$Date, "01")
+data3$Date <- as.Date(data3$Date, format = "%Y%b%d")
+data3$Date <- substr(data3$Date, 1,7)
+colnames(data3) <- c("Date", "Credit_rates")
+
+debt_securities <- debt_securities[-c(1:5), c(1,4)]
+colnames(debt_securities) <- c("Date", "Debt_securities")
+
+debt_securities$Date <- paste(debt_securities$Date, "01")
+debt_securities$Date <- as.Date(debt_securities$Date, format = "%Y%b%d")
+debt_securities$Date <- substr(debt_securities$Date, 1,7)
+
+colnames(coffee_prices) <- c("Date", "Coffee_price")
+coffee_prices <- coffee_prices[-1,]
+
+coffee_prices$Date <- as.Date(coffee_prices$Date, format="%Y-%m-%d")
+
+coffee_prices$Coffee_price <- as.numeric(as.character(coffee_prices$Coffee_price))
+
+coffee_prices <- coffee_prices %>% group_by(Date=floor_date(Date, "month")) %>%
+  summarize(Coffee_price=mean(Coffee_price))
+
+
+coffee_prices <- coffee_prices %>% drop_na(Coffee_price)
+coffee_prices$Date <- substr(coffee_prices$Date, 1,7)
+
+sugar_prices <- sugar_prices[4:242,1:2]
+colnames(sugar_prices) <- c("Date", "Sugar_price")
+sugar_prices$Sugar_price <- as.numeric(as.character(sugar_prices$Sugar_price))
+sugar_prices$Date <- paste(sugar_prices$Date, "-01", sep="")
+sugar_prices$Date <- as.Date(sugar_prices$Date, format="%b-%y-%d")
+sugar_prices$Date <- substr(sugar_prices$Date, 1,7)
+
+msci_europe <- msci_europe[-1, c(1, 7)]
+colnames(msci_europe) <- c("Date", "MSCI_Variation")
+msci_europe$MSCI_Variation <- as.character(msci_europe$MSCI_Variation)
+msci_europe$MSCI_Variation <- substr(msci_europe$MSCI_Variation, 1, nchar(msci_europe$MSCI_Variation)-1)
+msci_europe$MSCI_Variation <- gsub(",", ".", msci_europe$MSCI_Variation)
+msci_europe$MSCI_Variation <- as.numeric(msci_europe$MSCI_Variation)
+
+msci_europe$Date <- as.Date(msci_europe$Date, format = "%d/%m/%Y")
+msci_europe <- msci_europe %>% group_by(Date=floor_date(Date, "month")) %>%
+  summarize(MSCI_Variation=mean(MSCI_Variation))
+
+
+msci_europe$Date <- substr(msci_europe$Date, 1,7)
+```
+
+
+```{r}
+Data <- left_join(FF3, table1, by = c("Date"="Date"))
+Data <- left_join(Data, data1, by = c("Date"="Date"))
+Data <- left_join(Data, data_euro_dollar, by = c("Date"="Date"))
+Data <- left_join(Data, mcoilbrenteu[-c(1)], by = c("Date"="Date"))
+Data <- left_join(Data, natgasprice, by = c("Date"="Date"))
+Data <- left_join(Data, data3, by = c("Date"="Date"))
+Data <- left_join(Data, debt_securities, by = c("Date"="Date"))
+Data <- left_join(Data, coffee_prices, by = c("Date"="Date"))
+Data <- left_join(Data, sugar_prices, by = c("Date"="Date"))
+Data <- left_join(Data, msci_europe, by = c("Date"="Date"))
+```
+
+```{r echo=FALSE, results='asis'}
+knitr::kable(Data[1:5, ], caption = "Base de données")
+```
+
+```{r, include=FALSE}
+Data$HML=as.numeric(as.character(Data$HML))
+Data$SMB=as.numeric(as.character(Data$SMB))
+Data$`Mkt-RF`=as.numeric(as.character(Data$`Mkt-RF`))
+Data$RF=as.numeric(as.character(Data$RF))
+Data$Debt_securities=as.numeric(as.character(Data$Debt_securities))
+Data <- Data %>% drop_na(MSCI_Variation)
+```
+
+## Description de notre dataset final
+
+
+
