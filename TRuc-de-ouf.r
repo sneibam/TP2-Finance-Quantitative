@@ -6,6 +6,7 @@ library(dplyr)
 library(lubridate)
 library(tidyverse)
 library(hablar)
+library(corrplot)
 #install.packages("xts")
 library(xts)
 
@@ -184,38 +185,95 @@ msci_europe$Date <- substr(msci_europe$Date, 1,7)
 
 Data <- left_join(Data, msci_europe, by = c("Date"="Date"))
 
-## Euro Stoxx 50
+# MSCI financial services
+msci_fin <- read.csv("MSCI Europe Financials Price.csv", header = F, sep = ",")
+msci_fin <- msci_fin[-1, c(1, 7)]
+colnames(msci_fin) <- c("Date", "msci_fin_variation")
+msci_fin$msci_fin_variation <- as.character(msci_fin$msci_fin_variation)
+msci_fin$msci_fin_variation <- substr(msci_fin$msci_fin_variation, 1, nchar(msci_fin$msci_fin_variation)-1)
+msci_fin$msci_fin_variation <- gsub(",", ".", msci_fin$msci_fin_variation)
+msci_fin$msci_fin_variation <- as.numeric(msci_fin$msci_fin_variation)
 
-euro_stoxx50 <- read.csv("Euro Stoxx 50.csv", header = F, sep = ",")
-euro_stoxx50 <- euro_stoxx50[-1, c(1, 7)]
-colnames(euro_stoxx50) <- c("Date", "EuroStoxx_Variation")
-euro_stoxx50$EuroStoxx_Variation <- as.character(euro_stoxx50$EuroStoxx_Variation)
-euro_stoxx50$EuroStoxx_Variation <- substr(euro_stoxx50$EuroStoxx_Variation, 1, nchar(euro_stoxx50$EuroStoxx_Variation)-1)
-euro_stoxx50$EuroStoxx_Variation <- gsub(",", ".", euro_stoxx50$EuroStoxx_Variation)
-euro_stoxx50$EuroStoxx_Variation <- as.numeric(euro_stoxx50$EuroStoxx_Variation)
+msci_fin$Date <- paste(msci_fin$Date, "01")
+msci_fin$Date <- as.Date(msci_fin$Date, format="%b %y %d")
+msci_fin$Date <- substr(msci_fin$Date, 1,7)
 
-euro_stoxx50$Date <- paste(euro_stoxx50$Date, "01")
-euro_stoxx50$Date <- as.Date(euro_stoxx50$Date, format="%b %y %d")
-euro_stoxx50$Date <- substr(euro_stoxx50$Date, 1,7)
+Data <- left_join(Data, msci_fin, by = c("Date"="Date"))
 
-Data <- left_join(Data, euro_stoxx50, by = c("Date"="Date"))
+# MSCI industrial services
+msci_ind <- read.csv("MSCI Europe Industrials EUR Historical Data.csv", header = F, sep = ",")
+msci_ind <- msci_ind[-1, c(1, 7)]
+colnames(msci_ind) <- c("Date", "msci_ind_variation")
+msci_ind$msci_ind_variation <- as.character(msci_ind$msci_ind_variation)
+msci_ind$msci_ind_variation <- substr(msci_ind$msci_ind_variation, 1, nchar(msci_ind$msci_ind_variation)-1)
+msci_ind$msci_ind_variation <- gsub(",", ".", msci_ind$msci_ind_variation)
+msci_ind$msci_ind_variation <- as.numeric(msci_ind$msci_ind_variation)
+
+msci_ind$Date <- paste(msci_ind$Date, "01")
+msci_ind$Date <- as.Date(msci_ind$Date, format="%b %y %d")
+msci_ind$Date <- substr(msci_ind$Date, 1,7)
+
+Data <- left_join(Data, msci_ind, by = c("Date"="Date"))
+
+# MSCI healthcare services
+msci_health <- read.csv("MSCI Europe Health Care EUR Historical Data.csv", header = F, sep = ",")
+msci_health <- msci_health[-1, c(1, 7)]
+colnames(msci_health) <- c("Date", "msci_health_variation")
+msci_health$msci_health_variation <- as.character(msci_health$msci_health_variation)
+msci_health$msci_health_variation <- substr(msci_health$msci_health_variation, 1, nchar(msci_health$msci_health_variation)-1)
+msci_health$msci_health_variation <- gsub(",", ".", msci_health$msci_health_variation)
+msci_health$msci_health_variation <- as.numeric(msci_health$msci_health_variation)
+
+msci_health$Date <- paste(msci_health$Date, "01")
+msci_health$Date <- as.Date(msci_health$Date, format="%b %y %d")
+msci_health$Date <- substr(msci_health$Date, 1,7)
+
+Data <- left_join(Data, msci_health, by = c("Date"="Date"))
+
+# Nestle SA
+
+nestle <- read.csv("Nestle.csv", header = F, sep = ",")
+nestle <- nestle[-1, c(1, 7)]
+colnames(nestle) <- c("Date", "Nestle_share_price_variation")
+nestle$Nestle_share_price_variation <- as.character(nestle$Nestle_share_price_variation)
+nestle$Nestle_share_price_variation <- substr(nestle$Nestle_share_price_variation, 1, nchar(nestle$Nestle_share_price_variation)-1)
+nestle$Nestle_share_price_variation <- gsub(",", ".", nestle$Nestle_share_price_variation)
+nestle$Nestle_share_price_variation <- as.numeric(nestle$Nestle_share_price_variation)
+
+nestle$Date <- paste(nestle$Date, "01")
+nestle$Date <- as.Date(nestle$Date, format="%b %y %d")
+nestle$Date <- substr(nestle$Date, 1,7)
+
+Data <- left_join(Data, nestle, by = c("Date"="Date"))
+
+Data <- na.omit(Data)
 
 #Data <- Data %>% drop_na(MSCI_Variation)
-Data <- Data %>% drop_na(EuroStoxx_Variation)
+#Data <- Data %>% drop_na(EuroStoxx_Variation)
 
 # ACP
 
-pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA", "Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation", "EuroStoxx_Variation")], center=TRUE, scale. = TRUE)
+pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA", 
+                   "Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", 
+                   "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation",
+                   "Nestle_share_price_variation", "msci_fin_variation", "msci_ind_variation", "msci_health_variation")], center=TRUE, scale. = TRUE)
 summary(pca)
 
 library("FactoMineR")
-res.pca <- PCA(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA","Rates_Deposit_Facility_BCE", "USD", "MCOILBRENTEU", "Natural gas price", "Debt_securities", "Credit_rates", "Coffee_price", "Sugar_price", "MSCI_Variation", "EuroStoxx_Variation")], graph = TRUE)
+res.pca <- PCA(Data[,c("target","Mkt-RF", "MSCI_Variation",
+                       "Nestle_share_price_variation", "msci_fin_variation", "msci_ind_variation", "msci_health_variation")], graph = TRUE)
 print(res.pca)
+
 
 ## Eigen values
 library("factoextra")
 library(ggplot2)
 library("corrplot")
+
+M <- cor(as.matrix(Data[,colnames(Data) %in% c("target", "SMB", "HML", "CMA", "RMW", "MCOILBRENTEU", "Coffee_price", "Sugar_price","Debt_securities","Rates_Deposit_Facility_BCE", "MSCI_Variation", "msci_ind_variation", "msci_fin_variation", "msci_health_variation")]))
+corrplot(M)
+
+
 eig.val <- get_eigenvalue(res.pca)
 eig.val
 # Interpretation: Le critère de Kaiser (1961) nous indique que si la valeur propre est supérieure à 1, la composante principale concernée représente plus de variance par rapport à une seule variable d’origine. On remarque que les valeurs absolues qui expliques les trois prmeieres dimensions sont representées par supérieures à 1. 
@@ -243,9 +301,9 @@ fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
 # Contributions des variables à PC2
 fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
 fviz_contrib(res.pca, choice = "var", axes = 1:2, top = 10)
-# Les varaibles USD, MCOILBRENTEU, Coffee_price, Mkt-RF, RMW, USD,  sont celles qui contribuent le plus a la variance expliquee des 2 premiers axes.
-# Nous allons donc garder uniquement ces 4 variables pour la modelisation
-fviz_pca_var(res.pca, col.var = "contrib",
+# Les varaibles MSCI_industry, Credit_rates, MSCI_financial_services, MSCI_Variation, USD,  Natural_gas price sont celles qui contribuent le plus a la variance expliquee des 2 premiers axes.
+# Nous allons donc garder uniquement ces variables pour la modelisation
+fviz_pca_var(res.pca, col.var = "contrib", 
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")
 )
 res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
@@ -253,30 +311,4 @@ res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
 res.desc$Dim.1
 # Description de la dimension 2
 res.desc$Dim.2
-# 
-
-# Modelisation
-
-linear_model_3factors <- lm(formula = target ~ `Mkt-RF`+SMB+HML,data = Data)
-summary(linear_model_3factors)
-
-linear_model_5factors <- lm(formula = target ~ `Mkt-RF`+SMB+HML+RMW+CMA,data = Data)
-summary(linear_model_5factors)
-
-# Modele lineaire avec toutes nos variables
-linear_model_all <- lm(formula = target ~ `Mkt-RF`+SMB+HML+RMW+CMA+Rates_Deposit_Facility_BCE+USD+MCOILBRENTEU+`Natural gas price`+Credit_rates+Debt_securities+Coffee_price+Sugar_price+MSCI_Variation,data = Data)
-summary(linear_model_all)
-
-# Modele lineaire avec uniquement les variables significatives dans nos 2 axes
-linear_model <- lm(formula = target~Coffee_price+MCOILBRENTEU+`Mkt-RF`+Sugar_price+RMW+USD, data = Data)
-summary(linear_model)
-
-
-linear_model <- lm(formula = target~`Mkt-RF`+EuroStoxx_Variation+Credit_rates, `Natural gas price`, USD, data = Data)
-summary(linear_model)
-
-
-
-linear_model <- lm(formula = target ~ `Mkt-RF`+SMB+HML+RMW+MCOILBRENTEU+Credit_rates,data = Data)
-summary(linear_model)
 
