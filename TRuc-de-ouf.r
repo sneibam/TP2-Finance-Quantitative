@@ -260,11 +260,16 @@ pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA",
 summary(pca)
 
 library("FactoMineR")
+<<<<<<< HEAD
 res.pca <- PCA(Data[,c("SMB", "HML", "CMA", 
                        "RMW", "MCOILBRENTEU", "Coffee_price",
                        "Sugar_price","Debt_securities",
                        "Rates_Deposit_Facility_BCE", "MSCI_Variation",
                        "msci_ind_variation")], graph = TRUE)
+=======
+res.pca <- PCA(Data[,c("target","Mkt-RF", "MSCI_Variation",
+                       "Nestle_share_price_variation", "msci_fin_variation", "msci_ind_variation", "msci_health_variation")], graph = TRUE)
+>>>>>>> cd51fa950f2c853e78295b35e18655a3570940a5
 print(res.pca)
 
 
@@ -273,11 +278,15 @@ library("factoextra")
 library(ggplot2)
 library("corrplot")
 
+<<<<<<< HEAD
 M <- cor(as.matrix(Data[,colnames(Data) %in% c("SMB", "HML", "CMA", 
                                                "RMW", "MCOILBRENTEU", "Coffee_price",
                                                "Sugar_price","Debt_securities",
                                                "Rates_Deposit_Facility_BCE", 
                                                "msci_ind_variation")]))
+=======
+M <- cor(as.matrix(Data[,colnames(Data) %in% c("target", "SMB", "HML", "CMA", "RMW", "MCOILBRENTEU", "Coffee_price", "Sugar_price","Debt_securities","Rates_Deposit_Facility_BCE", "MSCI_Variation", "msci_ind_variation", "msci_fin_variation", "msci_health_variation")]))
+>>>>>>> cd51fa950f2c853e78295b35e18655a3570940a5
 corrplot(M)
 
 
@@ -322,5 +331,8 @@ res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
 res.desc$Dim.1
 # Description de la dimension 2
 res.desc$Dim.2
+<<<<<<< HEAD
 
+=======
+>>>>>>> cd51fa950f2c853e78295b35e18655a3570940a5
 
