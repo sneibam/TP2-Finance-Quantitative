@@ -10,7 +10,7 @@ library(corrplot)
 #install.packages("xts")
 library(xts)
 
-FF3 <- read.csv("dataFF3.csv", header = FALSE)
+FF3 <- read.csv("Data/dataFF3.csv", header = FALSE)
 colnames(FF3) <- c("Date", "Rates")
 colnames(table1) <- c("Date", "Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF" )
 
@@ -42,7 +42,7 @@ colnames(table1) <- c("Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF","Date")
 ### on fait un leftjoin des dfs FF3 et table1 en gardent touts les observations dans le tableau FF3
 #Data=merge(x = FF3, y = table1, by = "Date", all.x = TRUE)
 
-FF3 <- get(load("FF3.rdata"))
+FF3 <- get(load("Data/FF3.rdata"))
 head(FF3)
 Data <- left_join(FF3, table1, by = c("Date"="Date"))
 
@@ -84,7 +84,7 @@ Data <- left_join(Data, data1, by = c("Date"="Date"))
 
 #### Exchange rates USD to Euros
 
-data_euro_dollar <- read.csv("eurofxref-hist.csv")
+data_euro_dollar <- read.csv("Data/eurofxref-hist.csv")
 data_euro_dollar <- data_euro_dollar[,1:2]
 
 data_euro_dollar$Date <- as.Date(data_euro_dollar$Date, format = "%Y-%m-%d")
@@ -99,7 +99,7 @@ Data <- left_join(Data, data_euro_dollar, by = c("Date"="Date"))
 
 ### MCOIL eu
 
-mcoilbrenteu <- read.csv("MCOILBRENTEU.csv")
+mcoilbrenteu <- read.csv("Data/MCOILBRENTEU.csv")
 mcoilbrenteu$Date <- as.Date(mcoilbrenteu$DATE, format = "%Y-%m-%d")
 
 mcoilbrenteu$Date <- substr(mcoilbrenteu$Date, 1,7)
@@ -109,13 +109,13 @@ Data <- left_join(Data, mcoilbrenteu[-c(1)], by = c("Date"="Date"))
 
 ### Natural gas price
 
-natgasprice <- read.csv("natural_gas_prices.csv")
+natgasprice <- read.csv("Data/natural_gas_prices.csv")
 colnames(natgasprice) <- c("Date", "Natural gas price")
 Data <- left_join(Data, natgasprice, by = c("Date"="Date"))
 
 ### Taux d'interet credit
 
-data3 <- read.csv("data_credit.csv")
+data3 <- read.csv("Data/data_credit.csv")
 data3$Date <- paste(data3$Date, "01")
 data3$Date <- as.Date(data3$Date, format = "%Y%b%d")
 data3$Date <- substr(data3$Date, 1,7)
@@ -125,7 +125,7 @@ Data <- left_join(Data, data3, by = c("Date"="Date"))
 
 ### Debt securities
 
-debt_securities <- read.csv("debt_securities.csv", header = FALSE)
+debt_securities <- read.csv("Data/debt_securities.csv", header = FALSE)
 debt_securities <- debt_securities[-c(1:5), c(1,4)]
 colnames(debt_securities) <- c("Date", "Debt_securities")
 
@@ -141,7 +141,7 @@ Data$Debt_securities=as.numeric(as.character(Data$Debt_securities))
 
 # Cafe
 
-coffee_prices <- read.csv("coffee-prices-historical-chart-data.csv", header = F, sep=",")
+coffee_prices <- read.csv("Data/coffee-prices-historical-chart-data.csv", header = F, sep=",")
 colnames(coffee_prices) <- c("Date", "Coffee_price")
 coffee_prices <- coffee_prices[-1,]
 
@@ -159,7 +159,7 @@ coffee_prices$Date <- substr(coffee_prices$Date, 1,7)
 Data <- left_join(Data, coffee_prices, by = c("Date"="Date"))
 
 ## Sugar Price
-sugar_prices <- read.csv("sugar-240.csv", header = F, sep=";")
+sugar_prices <- read.csv("Data/sugar-240.csv", header = F, sep=";")
 sugar_prices <- sugar_prices[4:242,1:2]
 colnames(sugar_prices) <- c("Date", "Sugar_price")
 sugar_prices$Sugar_price <- as.numeric(as.character(sugar_prices$Sugar_price))
@@ -171,7 +171,7 @@ Data <- left_join(Data, sugar_prices, by = c("Date"="Date"))
 
 ## MSCI Europe
 
-msci_europe <- read.csv("MSCI.csv", header = F, sep = ",")
+msci_europe <- read.csv("Data/MSCI.csv", header = F, sep = ",")
 msci_europe <- msci_europe[-1, c(1, 7)]
 colnames(msci_europe) <- c("Date", "MSCI_Variation")
 msci_europe$MSCI_Variation <- as.character(msci_europe$MSCI_Variation)
@@ -186,7 +186,7 @@ msci_europe$Date <- substr(msci_europe$Date, 1,7)
 Data <- left_join(Data, msci_europe, by = c("Date"="Date"))
 
 # MSCI financial services
-msci_fin <- read.csv("MSCI Europe Financials Price.csv", header = F, sep = ",")
+msci_fin <- read.csv("Data/MSCI Europe Financials Price.csv", header = F, sep = ",")
 msci_fin <- msci_fin[-1, c(1, 7)]
 colnames(msci_fin) <- c("Date", "msci_fin_variation")
 msci_fin$msci_fin_variation <- as.character(msci_fin$msci_fin_variation)
@@ -201,7 +201,7 @@ msci_fin$Date <- substr(msci_fin$Date, 1,7)
 Data <- left_join(Data, msci_fin, by = c("Date"="Date"))
 
 # MSCI industrial services
-msci_ind <- read.csv("MSCI Europe Industrials EUR Historical Data.csv", header = F, sep = ",")
+msci_ind <- read.csv("Data/MSCI Europe Industrials EUR Historical Data.csv", header = F, sep = ",")
 msci_ind <- msci_ind[-1, c(1, 7)]
 colnames(msci_ind) <- c("Date", "msci_ind_variation")
 msci_ind$msci_ind_variation <- as.character(msci_ind$msci_ind_variation)
@@ -216,7 +216,7 @@ msci_ind$Date <- substr(msci_ind$Date, 1,7)
 Data <- left_join(Data, msci_ind, by = c("Date"="Date"))
 
 # MSCI healthcare services
-msci_health <- read.csv("MSCI Europe Health Care EUR Historical Data.csv", header = F, sep = ",")
+msci_health <- read.csv("Data/MSCI Europe Health Care EUR Historical Data.csv", header = F, sep = ",")
 msci_health <- msci_health[-1, c(1, 7)]
 colnames(msci_health) <- c("Date", "msci_health_variation")
 msci_health$msci_health_variation <- as.character(msci_health$msci_health_variation)
@@ -232,7 +232,7 @@ Data <- left_join(Data, msci_health, by = c("Date"="Date"))
 
 # Nestle SA
 
-nestle <- read.csv("Nestle.csv", header = F, sep = ",")
+nestle <- read.csv("Data/Nestle.csv", header = F, sep = ",")
 nestle <- nestle[-1, c(1, 7)]
 colnames(nestle) <- c("Date", "Nestle_share_price_variation")
 nestle$Nestle_share_price_variation <- as.character(nestle$Nestle_share_price_variation)
@@ -260,16 +260,15 @@ pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA",
 summary(pca)
 
 library("FactoMineR")
-<<<<<<< HEAD
 res.pca <- PCA(Data[,c("SMB", "HML", "CMA", 
                        "RMW", "MCOILBRENTEU", "Coffee_price",
                        "Sugar_price","Debt_securities",
                        "Rates_Deposit_Facility_BCE", "MSCI_Variation",
                        "msci_ind_variation")], graph = TRUE)
-=======
+
 res.pca <- PCA(Data[,c("target","Mkt-RF", "MSCI_Variation",
                        "Nestle_share_price_variation", "msci_fin_variation", "msci_ind_variation", "msci_health_variation")], graph = TRUE)
->>>>>>> cd51fa950f2c853e78295b35e18655a3570940a5
+
 print(res.pca)
 
 
@@ -278,15 +277,14 @@ library("factoextra")
 library(ggplot2)
 library("corrplot")
 
-<<<<<<< HEAD
 M <- cor(as.matrix(Data[,colnames(Data) %in% c("SMB", "HML", "CMA", 
                                                "RMW", "MCOILBRENTEU", "Coffee_price",
                                                "Sugar_price","Debt_securities",
                                                "Rates_Deposit_Facility_BCE", 
                                                "msci_ind_variation")]))
-=======
+
 M <- cor(as.matrix(Data[,colnames(Data) %in% c("target", "SMB", "HML", "CMA", "RMW", "MCOILBRENTEU", "Coffee_price", "Sugar_price","Debt_securities","Rates_Deposit_Facility_BCE", "MSCI_Variation", "msci_ind_variation", "msci_fin_variation", "msci_health_variation")]))
->>>>>>> cd51fa950f2c853e78295b35e18655a3570940a5
+
 corrplot(M)
 
 
@@ -331,8 +329,3 @@ res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
 res.desc$Dim.1
 # Description de la dimension 2
 res.desc$Dim.2
-<<<<<<< HEAD
-
-=======
->>>>>>> cd51fa950f2c853e78295b35e18655a3570940a5
-
