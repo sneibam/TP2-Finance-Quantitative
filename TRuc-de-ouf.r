@@ -260,8 +260,11 @@ pca=prcomp(Data[,c("target","Mkt-RF", "SMB", "HML", "RMW", "CMA",
 summary(pca)
 
 library("FactoMineR")
-res.pca <- PCA(Data[,c("target","Mkt-RF", "MSCI_Variation",
-                       "Nestle_share_price_variation", "msci_fin_variation", "msci_ind_variation", "msci_health_variation")], graph = TRUE)
+res.pca <- PCA(Data[,c("SMB", "HML", "CMA", 
+                       "RMW", "MCOILBRENTEU", "Coffee_price",
+                       "Sugar_price","Debt_securities",
+                       "Rates_Deposit_Facility_BCE", "MSCI_Variation",
+                       "msci_ind_variation")], graph = TRUE)
 print(res.pca)
 
 
@@ -270,7 +273,12 @@ library("factoextra")
 library(ggplot2)
 library("corrplot")
 
-M <- cor(as.matrix(select(Data, -c("RF", "Date", "target", "Mkt-RF"))))
+M <- cor(as.matrix(Data[,colnames(Data) %in% c("SMB", "HML", "CMA", 
+                                               "RMW", "MCOILBRENTEU", "Coffee_price",
+                                               "Sugar_price","Debt_securities",
+                                               "Rates_Deposit_Facility_BCE", 
+                                               "msci_ind_variation")]))
+corrplot(M)
 
 
 eig.val <- get_eigenvalue(res.pca)
@@ -299,6 +307,10 @@ fviz_cos2(res.pca, choice = "var", axes = 1:3)
 fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
 # Contributions des variables à PC2
 fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
+
+fviz_contrib(res.pca, choice = "var", axes = 3, top = 10)
+fviz_contrib(res.pca, choice = "var", axes = 4, top = 10)
+
 fviz_contrib(res.pca, choice = "var", axes = 1:2, top = 10)
 # Les varaibles MSCI_industry, Credit_rates, MSCI_financial_services, MSCI_Variation, USD,  Natural_gas price sont celles qui contribuent le plus a la variance expliquee des 2 premiers axes.
 # Nous allons donc garder uniquement ces variables pour la modelisation
@@ -310,4 +322,5 @@ res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
 res.desc$Dim.1
 # Description de la dimension 2
 res.desc$Dim.2
+
 
